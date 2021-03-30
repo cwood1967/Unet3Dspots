@@ -1,8 +1,10 @@
+import time
 import sys
 from multiprocessing import Process
 
 print(sys.path)
 from train_3d_tiles_dash import train
+
 
 ''' remember to use conda env dash3d '''
 def fx(params):
@@ -13,6 +15,7 @@ def fx(params):
                 'image_extension':params['image_extension'],
                 'force_z':params['force_z'],
                 'batch_size':params['batch_size'],
+                'channel_zero_index':params['channel'] - 1,
                 'epochs':params['epochs']}
     
     kwargs['tile_size'] = (params['tile-size-x'],
@@ -29,6 +32,6 @@ def fx(params):
         p = Process(target=train, kwargs=kwargs)
         p.start()
         #p.join() 
-        return "running " + npath
+        return p #"running " + npath
     except:
-        return value + " path does not exist"
+        return " path does not exist"

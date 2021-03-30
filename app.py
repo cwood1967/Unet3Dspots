@@ -1,4 +1,5 @@
 import os
+import time
 import socket
 import multiprocessing as mp
 
@@ -11,6 +12,8 @@ from dash.dependencies import Input, Output, State, MATCH, ALL
 from app_utils import checktype, checkpath
 from train_func import fx
 
+process_dict = {'process':None, 'params':None}
+doclink = 'https://webfs/n/core/micro/internal/unet3d/trainingdocs.md'
 def inputDiv(label, id, value, *args):
     """Return a dash html div with Label, Input, Label in a row.
     
@@ -52,7 +55,7 @@ inputmap = {
     9:['Batch Size', 'input-batch_size', '16', int],
     10:['Epochs', 'input-epochs', '300', int],
     11:['X Overlap Fraction', 'input-x-overlap', '0.5', float],
-    12:['Overlap Fraction', 'input-y-overlap', '0.5', float],
+    12:['Y Overlap Fraction', 'input-y-overlap', '0.5', float],
     13:['Z Overlap Fraction', 'input-z-overlap', '0.5', float],
 }
 
@@ -95,40 +98,80 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div([
+    html.Div(id='running', children=[]),
     html.Div(html.H3(f'3D Spot training on {socket.gethostname()}')),
-    html.Div([html.H5('Enter parameters for training'),
-             html.A(children="Click", href='/docs.html', target="_blank")]),
+    html.Div([html.H5('Enter parameters for training', id='header'),
+             html.A(children="Click here for explaination of parameters",
+                    href=doclink, target="_blank")]),
     html.Div(id='input-div',
                 children=[inputDiv(*v) for k,v in inputmap.items()]),
     html.Div([
         html.Button("Train", id='button-run', title="Push me"),
         html.Div(id='output', children='Result')
     ])
-])
+], id='app')
+
+def get_param_table_div():
+
+    content = [html.Tr([html.Td(k), html.Td(v)])
+              for k, v in process_dict['params'].items()]
+    table = html.Table(
+        [html.Tr([html.Th('Parameter'), html.Th('Value')]),
+            html.Tr(content)
+        ]
+    )
+    return table
+   
+
+def running_div():
+    interval = dcc.Interval(id='interval', interval=2000)
+    z = html.Div(get_is_running(),id='status')
+    div = html.Div([interval, z,
+                    get_param_table_div()],
+                   id='app')
+    return div
+
+def get_is_running():
+    try:
+        if process_dict['process'].is_alive():
+            return "is running"
+        else:
+            return "is not running"
+    except:
+        return "not a process"
 
 @app.callback(
-    #[Output('output', 'children'),
-     Output({'type':'val', 'id':ALL}, 'children'),
+    [Output('app', 'children'),
+     Output({'type':'val', 'id':ALL}, 'children')],
     Input('button-run', 'n_clicks'),
-    State({'type':'input', 'id':ALL}, 'value'))
-def run_training(n_clicks, value):
+    [State({'type':'input', 'id':ALL}, 'value'),
+     State('app', 'children')])
+def run_training(n_clicks, value, app_children):
     print(n_clicks)
     params = dict()
     v = validate(value)
     if n_clicks is None:
-        return v
+        return app_children, v
     vlen = len([True for i in v if i])
     if vlen > 0:
-        return v
+        return app_children, v
     for i,c in enumerate(value):
         f = inputmap[i][3]
         params[inputmap[i][1][6:]] = f(value[i]) 
     
-    fx(params) 
-    return v
+    process_dict['params'] = params
+    process_dict['process'] = fx(params) 
 
-def run_app(f, port=9800):
-    app.run_server(host='0.0.0.0', port=port)
-    
+    return running_div(), v
+
+@app.callback(
+    Output('status', 'children'),
+    Input('interval', 'n_intervals')
+)
+def update_status(n_intervals):
+    res = get_is_running()
+    t = time.asctime() 
+    return f'{t} : {res}' 
+
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', port=9800)
