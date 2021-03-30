@@ -219,7 +219,8 @@ def train(
     # # img_size = (1024,1024)
 
     # epochs = 400
-    log_dir = f'/ssd1/rla/unet_3d/logs/{project_name}/{time.time()}'
+    #log_dir = f'/ssd1/rla/unet_3d/logs/{project_name}/{time.time()}'
+    log_dir = f'logs/{project_name}/{time.time()}'
     model_string = '__e{epoch:03d}-l{val_loss:.5f}'
     model_path = f"{log_dir}/{project_name}{model_string}.h5"
 
@@ -274,10 +275,12 @@ def train(
 
 # EXAMPLE USE
 # --------------
-train(project_name='testing_dash_functions', 
-    train_folder='/n/projects/jru/public/emma_moore/3PO histology test for jay jeff/RICHARD/train/',
-    validation_folder = '/n/projects/jru/public/emma_moore/3PO histology test for jay jeff/RICHARD/validate/',
-    channel_zero_index=0, image_extension='.tif',
-    tile_size=(128,128,8), overlap_fraction=(0.5,0.5,0.5),
-    force_z=32, batch_size=32, epochs=300,
-)
+
+if __name__ == '__main__':
+    train(project_name='testing_dash_functions', 
+        train_folder='/n/projects/jru/public/emma_moore/3PO histology test for jay jeff/RICHARD/train/',
+        validation_folder = '/n/projects/jru/public/emma_moore/3PO histology test for jay jeff/RICHARD/validate/',
+        channel_zero_index=0, image_extension='.tif',
+        tile_size=(128,128,8), overlap_fraction=(0.5,0.5,0.5),
+        force_z=32, batch_size=32, epochs=300,
+    )

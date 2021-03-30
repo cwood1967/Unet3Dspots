@@ -7,13 +7,28 @@ from train_3d_tiles_dash import train
 ''' remember to use conda env dash3d '''
 def fx(params):
     
-    for k, v in params:
-        print(k, v)
+    kwargs = {'project_name':params['project_name'],
+                'train_folder':params['train_folder'],
+                'validation_folder':params['validation_folder'],
+                'image_extension':params['image_extension'],
+                'force_z':params['force_z'],
+                'batch_size':params['batch_size'],
+                'epochs':params['epochs']}
+    
+    kwargs['tile_size'] = (params['tile-size-x'],
+                            params['tile-size-y'],
+                            params['tile-size-z'])
+    
+    
+    kwargs['overlap_fraction'] = (params['x-overlap'],
+                                    params['y-overlap'],
+                                    params['z-overlap'])
 
-    # try:
-    #     p = mp.Process(target=train, args=(npath, spath, None))
-    #     p.start()
-    #     #p.join() 
-    #     return "running " + npath
-    # except:
-    #     return value + " path does not exist"
+    print(kwargs)
+    try:
+        p = Process(target=train, kwargs=kwargs)
+        p.start()
+        #p.join() 
+        return "running " + npath
+    except:
+        return value + " path does not exist"

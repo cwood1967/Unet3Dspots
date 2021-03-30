@@ -8,8 +8,8 @@ import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output, State, MATCH, ALL
 
-from .utils import checktype, checkpath
-from .train_func import fx
+from app_utils import checktype, checkpath
+from train_func import fx
 
 def inputDiv(label, id, value, *args):
     """Return a dash html div with Label, Input, Label in a row.
@@ -40,16 +40,16 @@ def inputDiv(label, id, value, *args):
 
 """Dictionary describing parameters {name, id, value, type}."""
 inputmap = {
-    0:['Project Name', 'input-project', 'My Training', str],
-    1:['Training Folder', 'input-train-folder', '/n/core/micro/', str],
-    2:['Validation Folder', 'input-val-folder', '/n/core/micro/', str],
-    3:['Image Extension', 'input-image-ext', '.tif', str],
+    0:['Project Name', 'input-project_name', 'My Training', str],
+    1:['Training Folder', 'input-train_folder', '/n/core/micro/', str],
+    2:['Validation Folder', 'input-validation_folder', '/n/core/micro/', str],
+    3:['Image Extension', 'input-image_extension', '.tif', str],
     4:['Channel (one based)', 'input-channel', '1', int],
     5:['Tile Size X', 'input-tile-size-x', '128', int],
     6:['Tile Size Y', 'input-tile-size-y', '128', int],
     7:['Tile Size Z', 'input-tile-size-z', '16', int],
-    8:['Force Z', 'input-force-z', '32', int],
-    9:['Batch Size', 'input-batchsize', '16', int],
+    8:['Force Z', 'input-force_z', '32', int],
+    9:['Batch Size', 'input-batch_size', '16', int],
     10:['Epochs', 'input-epochs', '300', int],
     11:['X Overlap Fraction', 'input-x-overlap', '0.5', float],
     12:['Overlap Fraction', 'input-y-overlap', '0.5', float],
@@ -112,8 +112,11 @@ app.layout = html.Div([
     Input('button-run', 'n_clicks'),
     State({'type':'input', 'id':ALL}, 'value'))
 def run_training(n_clicks, value):
+    print(n_clicks)
     params = dict()
     v = validate(value)
+    if n_clicks is None:
+        return v
     vlen = len([True for i in v if i])
     if vlen > 0:
         return v
