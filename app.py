@@ -10,7 +10,8 @@ import dash_core_components as dcc
 from dash.dependencies import Input, Output, State, MATCH, ALL
 
 from app_utils import checktype, checkpath
-from train_func import fx
+from train_func import fx, notify
+import sendmail
 
 process_dict = {'process':None, 'params':None}
 doclink = 'https://webfs/n/core/micro/internal/unet3d/trainingdocs.md'
@@ -57,6 +58,7 @@ inputmap = {
     11:['X Overlap Fraction', 'input-x-overlap', '0.5', float],
     12:['Y Overlap Fraction', 'input-y-overlap', '0.5', float],
     13:['Z Overlap Fraction', 'input-z-overlap', '0.5', float],
+    14:['Email address', 'input-email', '', str],
 }
 
 def validate(values):
@@ -124,7 +126,7 @@ def get_param_table_div():
    
 
 def running_div():
-    interval = dcc.Interval(id='interval', interval=2000)
+    interval = dcc.Interval(id='interval', disabled=False, interval=2000)
     z = html.Div(get_is_running(),id='status')
     div = html.Div([interval, z,
                     get_param_table_div()],
@@ -159,19 +161,30 @@ def run_training(n_clicks, value, app_children):
         f = inputmap[i][3]
         params[inputmap[i][1][6:]] = f(value[i]) 
     
+    process_dict['mail_sent'] = False    
     process_dict['params'] = params
-    process_dict['process'] = fx(params) 
+    process_dict['process'] = fx(params, is_test=False)
 
     return running_div(), v
 
 @app.callback(
-    Output('status', 'children'),
+    [Output('status', 'children'),
+     Output('interval', 'disabled')],
     Input('interval', 'n_intervals')
 )
 def update_status(n_intervals):
     res = get_is_running()
     t = time.asctime() 
-    return f'{t} : {res}' 
+
+    disabled = False
+    if not process_dict['mail_sent']:
+        if not process_dict['process'].is_alive():
+            process_dict['mail_sent'] = True
+            disabled = True
+            notify(process_dict['params'])
+    
+    print(disabled, n_intervals)    
+    return f'{t} : {res}', disabled
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', port=9800)
